@@ -1,0 +1,6 @@
+name: Condor
+author: Juan Cedeno
+version: ${version}
+main: us.jcedeno.condor.paper.CondorPaper
+api-version: 1.16
+api: ["1.16"]
