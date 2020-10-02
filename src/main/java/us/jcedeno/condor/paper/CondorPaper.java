@@ -28,8 +28,10 @@ public class CondorPaper extends JavaPlugin {
             var credentials = new ApplicationTokenCredentials("ae428b5b-3c74-453f-84bf-47f77155db5a",
                     "06ebbd6f-d9be-4f3b-aa71-bec887ccb7b0", "2E_6tGuY3Vw03KOzHSLOa4V9R~a.d3Lu1D",
                     AzureEnvironment.AZURE);
+
             azure = Azure.configure().authenticate(credentials)
                     .withSubscription("fcb53ea3-4077-45a3-9a6d-c8fd42c64372");
+
         } catch (Exception e) {
             e.printStackTrace();
         }
