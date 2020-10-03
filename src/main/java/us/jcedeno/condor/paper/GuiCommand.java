@@ -1,5 +1,6 @@
 package us.jcedeno.condor.paper;
 
+import com.microsoft.azure.management.compute.DiskSkuTypes;
 import com.microsoft.azure.management.compute.VirtualMachine;
 import com.microsoft.azure.management.network.Network;
 import com.microsoft.azure.management.resources.fluentcore.arm.Region;
@@ -84,8 +85,13 @@ public class GuiCommand extends BaseCommand {
                     .withPrimaryPrivateIPAddressDynamic()
                     .withNewPrimaryPublicIPAddress(instance.getAzure().publicIPAddresses().define(vmName)
                             .withRegion(Region.US_EAST).withExistingResourceGroup(RESOURCE_GROUP))
+
                     .withLinuxCustomImage(YATOPIA_IMAGE).withRootUsername("hynix").withSsh(SSH_KEY)
-                    .withComputerName(vmName).withSize(size).createAsync().doOnNext((vmIndex) -> {
+                    .withComputerName(vmName)
+                    .withNewDataDisk(instance.getAzure().disks().define(vmName + "Disk").withRegion(Region.US_EAST)
+                            .withExistingResourceGroup(RESOURCE_GROUP).withData().withSizeInGB(20)
+                            .withSku(DiskSkuTypes.PREMIUM_LRS))
+                    .withSize(size).createAsync().doOnNext((vmIndex) -> {
                         if (vmIndex instanceof VirtualMachine) {
                             var vm = (VirtualMachine) vmIndex;
                             var ip = vm.getPrimaryPublicIPAddress().ipAddress();
