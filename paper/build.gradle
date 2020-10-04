@@ -1,0 +1,68 @@
+plugins{
+    id 'eclipse'
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '6.0.0'
+}
+
+sourceCompatibility = 11
+targetCompatibility = 11
+
+group = 'us.jcedeno.condor'
+version = '0.1-SNAPSHOT'
+archivesBaseName = 'Condor-Paper'
+
+
+repositories {
+    mavenCentral()
+    jcenter()
+    maven { url 'https://papermc.io/repo/repository/maven-public/' }
+    maven { url 'https://libraries.minecraft.net/' }
+    maven { url 'https://plugins.gradle.org/m2' }
+    maven { url 'https://jitpack.io' }
+    maven { url 'https://repo.aikar.co/content/groups/aikar/' }
+}
+
+dependencies {
+    //Paper
+    compileOnly 'com.destroystokyo.paper:paper-api:1.16.3-R0.1-SNAPSHOT'
+    //Azure
+    compile 'com.microsoft.azure:azure:1.3.0'
+    compile 'com.azure:azure-identity:1.1.2'
+    compile 'fr.mrmicky:FastInv:3.0.2'
+    //Lombok
+	compileOnly 'org.projectlombok:lombok:1.18.12'
+	annotationProcessor 'org.projectlombok:lombok:1.18.12'
+	
+	testCompileOnly 'org.projectlombok:lombok:1.18.12'
+	testAnnotationProcessor 'org.projectlombok:lombok:1.18.12'
+    //ACF
+    compile 'co.aikar:acf-paper:0.5.0-SNAPSHOT'
+}
+
+processResources {
+    from(sourceSets.main.resources.srcDirs) {
+        expand 'version': project.version
+        include 'plugin.yml'
+    }
+}
+
+compileJava {
+    options.compilerArgs += ["-parameters"]
+    options.fork = true
+    options.forkOptions.executable = 'javac'
+}
+
+shadowJar {
+    minimize()
+    relocate 'okhttp3', 'shadded.okhttp3'
+    relocate 'okio', 'shadded.okio'
+    relocate 'co.aikar.commands', 'shadded.acf'
+    relocate 'co.aikar.locales', 'shadded.acf.locales'
+    relocate 'fr.mrmicky', 'shadded.gui'
+    
+}
+
+
+artifacts {
+    archives shadowJar
+}
