@@ -11,3 +11,4 @@ rootProject.name = 'Condor'
 
 include 'velocity'
 include 'paper'
+include 'common'

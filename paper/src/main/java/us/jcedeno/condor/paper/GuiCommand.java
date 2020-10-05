@@ -30,10 +30,11 @@ import rx.Observable;
 @CommandAlias("azure")
 public class GuiCommand extends BaseCommand {
 
-    final static String SSH_KEY = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCxywToqUnBdWNU/DmUm0+wal/xLtdVDStKT3iEB736UaXQKmL4xUyGq/iaD6xyvpe/oaS7cGFmHECumluj0bKWpSFIsVAmGhl1GzMR7i49k0q92abyJ8+wa8R//ysvJvDIX3hrdPch7l0tkCsr3CUzjHnli7QELJJFtF5jwZk0UsAITyLaQYlAjY+Ta8weSPE8O80Z3VJ5e3FbJlnoyXHLidNsCNuJTX4ZpfT0GkJYoj3oYQ03XC2eTwYaGZvQHc4sKj0ExZbC0XBJL9qP4xOX0wqng1fvz9zICIRz4JKmrwrX1MRRF54rLrHhj7gVazTDsAosGbTFeU2+pXXE6fsMIr3S5mSMCwAXBzAR08CbjiV1qxxfOtEwrxaqdipjNpGapoLjHs6rgiXuUBNKW7D+lr96GMbXnYhXrnpqDd2/ztjdeq3sroytopfHc6fAm/eWq91GzzErvAKMDRjRFocW4h8H8ccNwxg/S0XK8TcYx7TNfco7k/YBS8luClgx+Jk= henixceo@gmail.com";
+    final static String JCEDENO_SSH_KEY = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCxywToqUnBdWNU/DmUm0+wal/xLtdVDStKT3iEB736UaXQKmL4xUyGq/iaD6xyvpe/oaS7cGFmHECumluj0bKWpSFIsVAmGhl1GzMR7i49k0q92abyJ8+wa8R//ysvJvDIX3hrdPch7l0tkCsr3CUzjHnli7QELJJFtF5jwZk0UsAITyLaQYlAjY+Ta8weSPE8O80Z3VJ5e3FbJlnoyXHLidNsCNuJTX4ZpfT0GkJYoj3oYQ03XC2eTwYaGZvQHc4sKj0ExZbC0XBJL9qP4xOX0wqng1fvz9zICIRz4JKmrwrX1MRRF54rLrHhj7gVazTDsAosGbTFeU2+pXXE6fsMIr3S5mSMCwAXBzAR08CbjiV1qxxfOtEwrxaqdipjNpGapoLjHs6rgiXuUBNKW7D+lr96GMbXnYhXrnpqDd2/ztjdeq3sroytopfHc6fAm/eWq91GzzErvAKMDRjRFocW4h8H8ccNwxg/S0XK8TcYx7TNfco7k/YBS8luClgx+Jk= henixceo@gmail.com";
+    final static String ALEIV_SSH_KEY = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDWMkzRAiNqxNXXAfi4aE/6bJ7VeE0WsW1lwistm41zgPpMZFcarv901OtMv+VyTURxO4R3g18b326p5JbR0tO3BMp3vqCdmtA7xrTreGCcz5sB+GUvkMMyV5koY9t8PRuOh4hnvoeAEdJ7R2WzswD33idjViSFHK4WwCjN61fXs5VUVdyNZiaW6nnEP7bSCHMxghtpURZSmcNUa34FHWARPnQIeqFTycLdI/1B/PEypwAEFZAA35Rsb51bxF6K1agDYuc1mW4DaH6xDoaUZNAI0T73RfYJMW+7l4ILXr2W+HjHpAsgsn3bOXxgj35xxDbV7rmdIFOL4S9JE3eUbVKb jorgefcorralesmayorga@iMac-de-Jorge.local";
     final static String RESOURCE_GROUP = "hynix-resources";
     final static String HYNIX_IMAGE = "/subscriptions/fcb53ea3-4077-45a3-9a6d-c8fd42c64372/resourceGroups/hynix-resources/providers/Microsoft.Compute/images/debian-10-graal-hynix";
-    final static String YATOPIA_IMAGE = "/subscriptions/fcb53ea3-4077-45a3-9a6d-c8fd42c64372/resourceGroups/hynix-resources/providers/Microsoft.Compute/images/Yatopia-Image";
+    final static String YATOPIA_IMAGE = "/subscriptions/fcb53ea3-4077-45a3-9a6d-c8fd42c64372/resourceGroups/hynix-resources/providers/Microsoft.Compute/images/uhc-image";
     private @NonNull CondorPaper instance;
 
     @Default
@@ -86,8 +87,8 @@ public class GuiCommand extends BaseCommand {
                     .withNewPrimaryPublicIPAddress(instance.getAzure().publicIPAddresses().define(vmName)
                             .withRegion(Region.US_EAST).withExistingResourceGroup(RESOURCE_GROUP))
 
-                    .withLinuxCustomImage(YATOPIA_IMAGE).withRootUsername("hynix").withSsh(SSH_KEY)
-                    .withComputerName(vmName)
+                    .withLinuxCustomImage(YATOPIA_IMAGE).withRootUsername("hynix").withSsh(JCEDENO_SSH_KEY)
+                    .withSsh(ALEIV_SSH_KEY).withComputerName(vmName)
                     .withNewDataDisk(instance.getAzure().disks().define(vmName + "Disk").withRegion(Region.US_EAST)
                             .withExistingResourceGroup(RESOURCE_GROUP).withData().withSizeInGB(20)
                             .withSku(DiskSkuTypes.PREMIUM_LRS))

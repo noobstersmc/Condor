@@ -1,17 +1,9 @@
-plugins{
-    id 'eclipse'
-    id 'java'
+plugins {
     id 'com.github.johnrengelman.shadow' version '6.0.0'
-    id "io.freefair.lombok" version "5.2.1"
+    id 'io.freefair.lombok' version '5.2.1'
 }
 
-sourceCompatibility = 11
-targetCompatibility = 11
-
-group = 'us.jcedeno.condor'
-version = '0.1-SNAPSHOT'
 archivesBaseName = 'Condor-Paper'
-
 
 repositories {
     mavenCentral()
@@ -32,6 +24,8 @@ dependencies {
     compile 'fr.mrmicky:FastInv:3.0.2'
     //ACF
     compile 'co.aikar:acf-paper:0.5.0-SNAPSHOT'
+    //Lettuce
+    compile 'io.lettuce:lettuce-core:6.0.0.RELEASE'
 }
 
 processResources {
@@ -42,7 +36,7 @@ processResources {
 }
 
 compileJava {
-    options.compilerArgs += ["-parameters"]
+    options.compilerArgs += ['-parameters']
     options.fork = true
     options.forkOptions.executable = 'javac'
 }
@@ -54,9 +48,7 @@ shadowJar {
     relocate 'co.aikar.commands', 'shadded.acf'
     relocate 'co.aikar.locales', 'shadded.acf.locales'
     relocate 'fr.mrmicky', 'shadded.gui'
-    
 }
-
 
 artifacts {
     archives shadowJar

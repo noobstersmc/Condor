@@ -1,28 +1,16 @@
-plugins{
-    id 'java'
+plugins {
     id 'com.github.johnrengelman.shadow' version '6.0.0'
     id 'io.freefair.lombok' version '5.2.1'
 }
 
-sourceCompatibility = 11
-targetCompatibility = 11
-
-group = 'us.jcedeno.condor'
-version = '0.1-SNAPSHOT'
 archivesBaseName = 'Condor-Velocity'
 
 repositories {
-    mavenCentral()
-    jcenter()
-    maven { url 'https://plugins.gradle.org/m2' }
     maven { url 'https://repo.velocitypowered.com/snapshots/' }
-    maven { url = "https://repo.aikar.co/content/groups/aikar/" }
-    mavenCentral()
-    jcenter()
 }
 
 compileJava {
-    options.compilerArgs += ["-parameters", "-processorpath"]
+    options.compilerArgs += ['-parameters']
     options.fork = true
     options.forkOptions.executable = 'javac'
 }
@@ -30,14 +18,24 @@ shadowJar {
     minimize()
     relocate 'co.aikar.commands', 'shadded.acf'
     relocate 'co.aikar.locales', 'shadded.acf.locales'
-    
+    relocate 'io.netty', 'shadded.io.netty'
+    relocate 'io.lettuce', 'shadded.io.lettuce'
+    relocate 'co.aikar.locales', 'shadded.acf.locales'
+    relocate 'org.reactivestreams', 'shadded.org.reactivestreams'
+    relocate 'reactor.util', 'shadded.reactor.util'
+    relocate 'reactor.adapter', 'shadded.reactor.adapter'
+    relocate 'reactor.core', 'shadded.reactor.core'
 }
 
-dependencies{
-    compileOnly 'com.velocitypowered:velocity-api:1.0.0-SNAPSHOT'
+dependencies {
+    compile project(':common')
+    //Letuce
+    compile 'io.lettuce:lettuce-core:6.0.0.RELEASE'
+    //Commands
     compile 'co.aikar:acf-velocity:0.5.0-SNAPSHOT'
+    //Velocity
+    compileOnly 'com.velocitypowered:velocity-api:1.0.0-SNAPSHOT'
     annotationProcessor 'com.velocitypowered:velocity-api:1.0.0-SNAPSHOT'
 }
-
 
 build.dependsOn shadowJar

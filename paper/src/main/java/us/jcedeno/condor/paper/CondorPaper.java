@@ -21,7 +21,7 @@ public class CondorPaper extends JavaPlugin {
     public void onEnable() {
         commandManager = new PaperCommandManager(this);
         FastInvManager.register(this);
-
+        
         commandManager.registerCommand(new GuiCommand(this));
 
         try {
