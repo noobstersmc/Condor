@@ -2,23 +2,33 @@ package us.jcedeno.condor.velocity.commands;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 import com.velocitypowered.api.command.CommandSource;
+import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 
 import co.aikar.commands.BaseCommand;
 import co.aikar.commands.annotation.CommandAlias;
+import co.aikar.commands.annotation.CommandPermission;
 import co.aikar.commands.annotation.Default;
 import co.aikar.commands.annotation.Name;
 import co.aikar.commands.annotation.Optional;
 import co.aikar.commands.annotation.Subcommand;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import net.kyori.text.Component;
 import net.kyori.text.TextComponent;
+import net.kyori.text.event.HoverEvent;
+import net.kyori.text.event.HoverEvent.Action;
 import us.jcedeno.condor.velocity.CondorVelocity;
+import us.jcedeno.providers.vultr.gson.InstanceCreationError;
+import us.jcedeno.providers.vultr.gson.InstanceType;
+import us.jcedeno.providers.vultr.gson.VultrAPI;
 
 @RequiredArgsConstructor
+@CommandPermission("condor.proxy")
 @CommandAlias("condor-velocity|cv")
 public class CondorCommand extends BaseCommand {
     private @NonNull CondorVelocity instance;
@@ -26,8 +36,55 @@ public class CondorCommand extends BaseCommand {
 
     @Default
     public void onDefault(CommandSource source) {
-        source.sendMessage(TextComponent.of("nos"));
+        VultrAPI.getInstances().thenAccept(a -> {
+            if (a != null) {
+                Component text = TextComponent.of("Servers: ");
+                for (var instance : a) {
+                    text = text.append(TextComponent.of("vultr-" + instance.getMain_ip())).hoverEvent(HoverEvent.of(
+                            Action.SHOW_TEXT,
+                            TextComponent.of("ID: " + instance.getId() + "\nvCPU: " + instance.getVcpu_count()
+                                    + "\nRAM: " + instance.getRam() + "M\nRegion: " + instance.getRegion()
+                                    + "\nStatus: " + instance.getStatus() + "\nDate: " + instance.getDate_created()
+                                    + "\nLabel: " + instance.getLabel() + "\nTag: " + instance.getTag())));
+                }
+                source.sendMessage(text);
+            }
+        });
+    }
 
+    @Subcommand("create uhc")
+    public void onInstanceCreate(CommandSource source, @Default("ewr") @Name("region") String region,
+            @Name("instance-type") @Default("vhf-3c-8gb") String instanceType) {
+        var creatorName = source instanceof Player ? ((Player) source).getUsername() : "console";
+        VultrAPI.createInstance(creatorName, region, instanceType).thenAccept((result) -> {
+            if (result instanceof InstanceType) {
+                var machine = (InstanceType) result;
+                final var id = machine.getId();
+                source.sendMessage(TextComponent.of("Instance is being created with id " + id));
+                instance.getServer().getScheduler().buildTask(instance, () -> {
+                    VultrAPI.getInstance(id).thenAccept((updatedResult) -> {
+                        if (updatedResult instanceof InstanceType) {
+                            var updatedMachine = (InstanceType) updatedResult;
+                            servers.add(instance.getServer()
+                                    .registerServer(of(updatedMachine.getId(), updatedMachine.getMain_ip(), 25565)));
+                            instance.getServer().broadcast(TextComponent.of("Added server " + updatedMachine.getId()
+                                    + " with ip " + updatedMachine.getMain_ip() + " to the proxy"));
+                        } else {
+                            source.sendMessage(TextComponent.of("An error ocurred..."));
+                        }
+                    });
+
+                }).delay(10, TimeUnit.SECONDS).schedule();
+
+            } else if (result instanceof InstanceCreationError) {
+                var error = (InstanceCreationError) result;
+                source.sendMessage(TextComponent.of("Instance couldn't be created with error " + error.getError()
+                        + " and code " + error.getStatus()));
+            } else {
+                source.sendMessage(TextComponent.of("A null pointer exception has ocurred. Please report this."));
+            }
+
+        });
     }
 
     @Subcommand("add")
@@ -53,6 +110,7 @@ public class CondorCommand extends BaseCommand {
                 var registeredServer = matchedInstance.get();
                 var serverInfo = registeredServer.getServerInfo();
                 servers.remove(registeredServer);
+
                 instance.getServer().unregisterServer(serverInfo);
                 source.sendMessage(TextComponent.of("Removed ephimeral instance " + serverInfo.toString()));
             } else {

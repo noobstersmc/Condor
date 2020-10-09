@@ -25,6 +25,7 @@ import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.hover.content.Text;
 import rx.Observable;
+import software.amazon.awssdk.services.ec2.Ec2Client;
 
 @RequiredArgsConstructor
 @CommandAlias("azure")

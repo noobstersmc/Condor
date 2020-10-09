@@ -26,6 +26,8 @@ dependencies {
     compile 'co.aikar:acf-paper:0.5.0-SNAPSHOT'
     //Lettuce
     compile 'io.lettuce:lettuce-core:6.0.0.RELEASE'
+    //AWS
+    compile 'software.amazon.awssdk:ec2:2.15.5'
 }
 
 processResources {

@@ -25,6 +25,10 @@ shadowJar {
     relocate 'reactor.util', 'shadded.reactor.util'
     relocate 'reactor.adapter', 'shadded.reactor.adapter'
     relocate 'reactor.core', 'shadded.reactor.core'
+    relocate 'org.jetbrains', 'shadded.org.jetbrains'
+    relocate 'okhttp3', 'shadded.okhttp3'
+    relocate 'okio', 'shadded.okio'
+    relocate 'kotlin', 'shadded.kotlin'
 }
 
 dependencies {
@@ -36,6 +40,9 @@ dependencies {
     //Velocity
     compileOnly 'com.velocitypowered:velocity-api:1.0.0-SNAPSHOT'
     annotationProcessor 'com.velocitypowered:velocity-api:1.0.0-SNAPSHOT'
+    //okhttp
+    implementation("com.squareup.okhttp3:okhttp:4.9.0")
+    implementation 'com.google.code.gson:gson:2.8.6'
 }
 
 build.dependsOn shadowJar
