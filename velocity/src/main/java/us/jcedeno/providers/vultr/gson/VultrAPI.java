@@ -44,15 +44,17 @@ public class VultrAPI {
             var body = RequestBody.create(createServerJson(creator, region, instanceType), JSON);
             var request = new Request.Builder().url("https://api.vultr.com/v2/instances")
                     .header("Authorization", "Bearer " + VULTR_API_KEY).post(body).build();
-                    
+
             InstanceResult result = null;
 
             try (Response response = client.newCall(request).execute()) {
                 var responseJson = response.body().string();
                 if (!response.isSuccessful()) {
                     result = gson.fromJson(responseJson, InstanceCreationError.class);
-                }else{
-                    result= gson.fromJson(gson.fromJson(responseJson, JsonElement.class).getAsJsonObject().get("instance"), InstanceType.class);
+                } else {
+                    result = gson.fromJson(
+                            gson.fromJson(responseJson, JsonElement.class).getAsJsonObject().get("instance"),
+                            InstanceType.class);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -81,12 +83,6 @@ public class VultrAPI {
         });
     }
 
-    private static String createServerJson(String username, String region, String instanceType) {
-        return String.format(
-                "{\"region\": \"%s\", \"plan\":\"%s\", \"label\": \"%s game\", \"os_id\": \"352\", \"script_id\": \"5bd20686-41e3-4950-8424-55b477ab83c4\", \"sshkey_id\": [\"f1bf11fd-6b87-450f-a2f3-c7c26e783144\", \"0dd4f40e-3e7a-4a28-a27e-ff3fde54d2d9\", \"5fa2fc79-84e2-43fe-9ed3-6e93d012623c\"]}",
-                region, instanceType, username);
-    }
-
     public static void main(String[] args) {
 
         createInstance("juan2", "ewr", "vhf-1c-2gb").thenAcceptAsync(a -> {
@@ -96,13 +92,22 @@ public class VultrAPI {
             } else if (a instanceof InstanceCreationError) {
                 var error = (InstanceCreationError) a;
                 System.out.println("error: " + error.error);
-            }else{
+            } else {
                 System.err.println("error");
             }
         });
-        while(true){
+        while (true) {
 
         }
+    }
+
+    /*
+     * Json factory
+     */
+    private static String createServerJson(String username, String region, String instanceType) {
+        return String.format(
+                "{\"region\": \"%s\", \"plan\":\"%s\", \"label\": \"%s game\", \"os_id\": \"352\", \"script_id\": \"5bd20686-41e3-4950-8424-55b477ab83c4\", \"sshkey_id\": [\"f1bf11fd-6b87-450f-a2f3-c7c26e783144\", \"0dd4f40e-3e7a-4a28-a27e-ff3fde54d2d9\", \"5fa2fc79-84e2-43fe-9ed3-6e93d012623c\"]}",
+                region, instanceType, username);
     }
 
 }
