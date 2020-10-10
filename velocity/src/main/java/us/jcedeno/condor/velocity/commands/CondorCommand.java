@@ -54,7 +54,7 @@ public class CondorCommand extends BaseCommand {
 
     @Subcommand("create uhc")
     public void onInstanceCreate(CommandSource source, @Default("ewr") @Name("region") String region,
-            @Name("instance-type") @Default("vhf-3c-8gb") String instanceType)
+            @Name("instance-type") @Default("vhf-3c-8gb") String instanceType) {
         var creatorName = getCommandSourceName(source);
         VultrAPI.createInstance(creatorName, region, instanceType).thenAccept((result) -> {
             if (result instanceof InstanceType) {
@@ -100,14 +100,15 @@ public class CondorCommand extends BaseCommand {
                             .forEach(player -> player.sendMessage(deletionMessage));
                     instance.getLogger().info(deletionMessage.toString());
                     try {
-                        //Attempt to delete it if it exist on the proxy
+                        // Attempt to delete it if it exist on the proxy
                         onRemoveName(source, id, 25565);
                     } catch (Exception e) {
                     }
                     break;
                 }
-                default:{
-                    source.sendMessage(TextComponet.of("Server with ID " + id + " couldn't be deleted due to error: " + result.getError()));
+                default: {
+                    source.sendMessage(TextComponent
+                            .of("Server with ID " + id + " couldn't be deleted due to error: " + result.getError()));
                 }
             }
         });
