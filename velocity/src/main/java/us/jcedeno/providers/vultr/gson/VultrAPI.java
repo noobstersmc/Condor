@@ -67,14 +67,36 @@ public class VultrAPI {
         return CompletableFuture.supplyAsync(() -> {
 
             var request = new Request.Builder().url("https://api.vultr.com/v2/instances/" + id)
-                    .header("Authorization", "Bearer AHEH4R54IO6BJ2LBSQTUXTV5YIW7UTTYYP5A").build();
+                    .header("Authorization", "Bearer " + VULTR_API_KEY).build();
 
             try (Response response = client.newCall(request).execute()) {
                 var responseJson = response.body().string();
                 if (!response.isSuccessful()) {
                     return gson.fromJson(responseJson, InstanceCreationError.class);
                 }
-                return gson.fromJson(responseJson, InstanceType.class);
+                return gson.fromJson(gson.fromJson(responseJson, JsonElement.class).getAsJsonObject().get("instance"),
+                        InstanceType.class);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        });
+    }
+
+    public static CompletableFuture<InstanceResult> deleteInstance(String id) {
+        return CompletableFuture.supplyAsync(() -> {
+            var request = new Request.Builder().url("https://api.vultr.com/v2/instances/" + id).delete()
+                    .header("Authorization", "Bearer " + VULTR_API_KEY).build();
+
+            try (Response response = client.newCall(request).execute()) {
+                var responseJson = response.body().string();
+                if (!response.isSuccessful()) {
+                    return gson.fromJson(responseJson, InstanceCreationError.class);
+                }
+                // TODO: Change it to Completion Event or something.
+                return gson.fromJson("{\"error\": \"Ok. Completed succesfully\",\"status\": \"200\"}",
+                        InstanceCreationError.class);
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -85,13 +107,13 @@ public class VultrAPI {
 
     public static void main(String[] args) {
 
-        createInstance("juan2", "ewr", "vhf-1c-2gb").thenAcceptAsync(a -> {
+        deleteInstance("dev-preview-gqytcojshazto").thenAcceptAsync(a -> {
             if (a instanceof InstanceType) {
                 var ins = (InstanceType) a;
-                System.out.println("Instance" + ins.getId());
+                System.out.println("Instance " + ins.getId());
             } else if (a instanceof InstanceCreationError) {
                 var error = (InstanceCreationError) a;
-                System.out.println("error: " + error.error);
+                System.out.println("error: \" " + error.error + "\" status: \"" + error.getStatus() + "\"");
             } else {
                 System.err.println("error");
             }

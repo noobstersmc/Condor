@@ -87,6 +87,14 @@ public class CondorCommand extends BaseCommand {
         });
     }
 
+    @Subcommand("delete uhc")
+    public void deleteVultrInstance(CommandSource source, @Name("instance-id")String id){
+        VultrAPI.deleteInstance(id).thenAccept(result->{
+
+        });
+
+    }
+
     @Subcommand("add")
     public void onAddServer(CommandSource source, @Name("server-name") String name, @Name("ip-address") String ip,
             @Name("port") Integer port) {
