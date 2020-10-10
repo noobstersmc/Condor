@@ -18,7 +18,7 @@ public class CondorVelocity {
     private @Getter ProxyServer server;
     private @Getter VelocityCommandManager commandManager;
     private @Getter RedisManager redisManager;
-    private final Logger logger;
+    private final @Getter Logger logger;
 
     @Inject
     public CondorVelocity(ProxyServer server, Logger logger) {

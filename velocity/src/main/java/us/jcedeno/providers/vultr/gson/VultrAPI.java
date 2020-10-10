@@ -84,7 +84,7 @@ public class VultrAPI {
         });
     }
 
-    public static CompletableFuture<InstanceResult> deleteInstance(String id) {
+    public static CompletableFuture<InstanceCreationError> deleteInstance(String id) {
         return CompletableFuture.supplyAsync(() -> {
             var request = new Request.Builder().url("https://api.vultr.com/v2/instances/" + id).delete()
                     .header("Authorization", "Bearer " + VULTR_API_KEY).build();
@@ -107,20 +107,13 @@ public class VultrAPI {
 
     public static void main(String[] args) {
 
-        deleteInstance("dev-preview-gqytcojshazto").thenAcceptAsync(a -> {
-            if (a instanceof InstanceType) {
-                var ins = (InstanceType) a;
-                System.out.println("Instance " + ins.getId());
-            } else if (a instanceof InstanceCreationError) {
-                var error = (InstanceCreationError) a;
-                System.out.println("error: \" " + error.error + "\" status: \"" + error.getStatus() + "\"");
-            } else {
-                System.err.println("error");
-            }
+        var future =  deleteInstance("dev-preview-gqytcojshazto").thenAcceptAsync(result -> {
+           System.out.println(result.error + " status:" + result.status);
         });
-        while (true) {
-
+        while (!future.isDone()) {
         }
+        
+        System.out.println("Done");
     }
 
     /*

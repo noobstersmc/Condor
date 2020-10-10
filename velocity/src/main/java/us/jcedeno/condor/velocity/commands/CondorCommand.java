@@ -54,8 +54,8 @@ public class CondorCommand extends BaseCommand {
 
     @Subcommand("create uhc")
     public void onInstanceCreate(CommandSource source, @Default("ewr") @Name("region") String region,
-            @Name("instance-type") @Default("vhf-3c-8gb") String instanceType) {
-        var creatorName = source instanceof Player ? ((Player) source).getUsername() : "console";
+            @Name("instance-type") @Default("vhf-3c-8gb") String instanceType)
+        var creatorName = getCommandSourceName(source);
         VultrAPI.createInstance(creatorName, region, instanceType).thenAccept((result) -> {
             if (result instanceof InstanceType) {
                 var machine = (InstanceType) result;
@@ -88,11 +88,34 @@ public class CondorCommand extends BaseCommand {
     }
 
     @Subcommand("delete uhc")
-    public void deleteVultrInstance(CommandSource source, @Name("instance-id")String id){
-        VultrAPI.deleteInstance(id).thenAccept(result->{
-
+    public void deleteVultrInstance(CommandSource source, @Name("instance-id") String id) {
+        VultrAPI.deleteInstance(id).thenAccept(result -> {
+            switch (result.getStatus()) {
+                case 200: {
+                    var sourceName = getCommandSourceName(source);
+                    var deletionMessage = TextComponent
+                            .of("Server with ID " + id + " has been deleted by " + sourceName);
+                    instance.getServer().getAllPlayers().stream()
+                            .filter(player -> player.hasPermission("condor.deletion.notify"))
+                            .forEach(player -> player.sendMessage(deletionMessage));
+                    instance.getLogger().info(deletionMessage.toString());
+                    try {
+                        //Attempt to delete it if it exist on the proxy
+                        onRemoveName(source, id, 25565);
+                    } catch (Exception e) {
+                    }
+                    break;
+                }
+                default:{
+                    source.sendMessage(TextComponet.of("Server with ID " + id + " couldn't be deleted due to error: " + result.getError()));
+                }
+            }
         });
 
+    }
+
+    private String getCommandSourceName(CommandSource source) {
+        return source instanceof Player ? ((Player) source).getUsername() : "console";
     }
 
     @Subcommand("add")
