@@ -1,0 +1,51 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '6.0.0'
+    id 'io.freefair.lombok' version '5.2.1'
+}
+
+archivesBaseName = 'Condor-Communicator'
+
+repositories {
+    mavenCentral()
+    jcenter()
+    maven { url 'https://papermc.io/repo/repository/maven-public/' }
+    maven { url 'https://libraries.minecraft.net/' }
+    maven { url 'https://plugins.gradle.org/m2' }
+    maven { url 'https://jitpack.io' }
+    maven { url 'https://repo.aikar.co/content/groups/aikar/' }
+}
+
+dependencies {
+    //Paper
+    compileOnly 'com.destroystokyo.paper:paper-api:1.16.3-R0.1-SNAPSHOT'
+    //Gui
+    compile 'fr.mrmicky:FastInv:3.0.2'
+    //ACF
+    compile 'co.aikar:acf-paper:0.5.0-SNAPSHOT'
+    //Lettuce
+    compile 'io.lettuce:lettuce-core:6.0.0.RELEASE'
+}
+
+processResources {
+    from(sourceSets.main.resources.srcDirs) {
+        expand 'version': project.version
+        include 'plugin.yml'
+    }
+}
+
+compileJava {
+    options.compilerArgs += ['-parameters']
+    options.fork = true
+    options.forkOptions.executable = 'javac'
+}
+
+shadowJar {
+    minimize()
+    relocate 'co.aikar.commands', 'shadded.acf'
+    relocate 'co.aikar.locales', 'shadded.acf.locales'
+    relocate 'fr.mrmicky', 'shadded.gui'
+}
+
+artifacts {
+    archives shadowJar
+}

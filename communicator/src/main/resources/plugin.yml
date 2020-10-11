@@ -1,0 +1,6 @@
+name: Condor-Communicator
+author: Juan Cedeno
+version: ${version}
+main: us.jcedeno.condor.communicator.CommunicatorPLugin
+api-version: 1.16
+api: ["1.16"]
