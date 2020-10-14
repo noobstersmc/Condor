@@ -33,8 +33,6 @@ public class CommunicatorPlugin extends JavaPlugin {
         // Create RestAPI server on port 8080
         port(getConfig().getInt("port", 8081));
         get("/players", (req, res) -> gson.toJson(getSerializedPlayers(new ArrayList<>(Bukkit.getOnlinePlayers()))));
-        
-
     }
 
     public static void addRoute(String path, Route route){
@@ -44,7 +42,7 @@ public class CommunicatorPlugin extends JavaPlugin {
     }
 
 
-    List<SerializedPlayer> getSerializedPlayers(ArrayList<Player> players) {
+    public static List<SerializedPlayer> getSerializedPlayers(ArrayList<Player> players) {
         var serialedPlayers = new ArrayList<SerializedPlayer>();
         players.forEach(all -> serialedPlayers.add(SerializedPlayer.from(all)));
 
