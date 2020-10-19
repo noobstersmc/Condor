@@ -51,6 +51,40 @@ public class CondorCommand extends BaseCommand {
             }
         });
     }
+    @Subcommand("create run")
+    public void onUHCRunCreate(CommandSource source, @Default("ewr") @Name("region") String region,
+            @Name("instance-type") @Default("vhf-2c-4gb") String instanceType) {
+        var creatorName = getCommandSourceName(source);
+        VultrAPI.createRun(creatorName, region, instanceType).thenAccept((result) -> {
+            if (result instanceof InstanceType) {
+                var machine = (InstanceType) result;
+                final var id = machine.getId();
+                source.sendMessage(TextComponent.of("Instance for UHC Run is being created with id " + id));
+                instance.getServer().getScheduler().buildTask(instance, () -> {
+                    VultrAPI.getInstance(id).thenAccept((updatedResult) -> {
+                        if (updatedResult instanceof InstanceType) {
+                            var updatedMachine = (InstanceType) updatedResult;
+                            servers.add(instance.getServer()
+                                    .registerServer(of(updatedMachine.getId(), updatedMachine.getMain_ip(), 25565)));
+                            instance.getServer().broadcast(TextComponent.of("Added server " + updatedMachine.getId()
+                                    + " with ip " + updatedMachine.getMain_ip() + " to the proxy"));
+                        } else {
+                            source.sendMessage(TextComponent.of("An error ocurred..."));
+                        }
+                    });
+
+                }).delay(30, TimeUnit.SECONDS).schedule();
+
+            } else if (result instanceof InstanceCreationError) {
+                var error = (InstanceCreationError) result;
+                source.sendMessage(TextComponent.of("Instance couldn't be created with error " + error.getError()
+                        + " and code " + error.getStatus()));
+            } else {
+                source.sendMessage(TextComponent.of("A null pointer exception has ocurred. Please report this."));
+            }
+
+        });
+    }
 
     @Subcommand("create uhc")
     public void onInstanceCreate(CommandSource source, @Default("ewr") @Name("region") String region,
@@ -74,7 +108,7 @@ public class CondorCommand extends BaseCommand {
                         }
                     });
 
-                }).delay(10, TimeUnit.SECONDS).schedule();
+                }).delay(30, TimeUnit.SECONDS).schedule();
 
             } else if (result instanceof InstanceCreationError) {
                 var error = (InstanceCreationError) result;
