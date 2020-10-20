@@ -31,7 +31,7 @@ public class HubCommand extends BaseCommand {
                     return;
                 }
                 player.createConnectionRequest(lobbyServer).fireAndForget();
-                player.sendMessage(TextComponent.of("Sending you to the lobby").color(TextColor.GREEN));
+                player.sendMessage(TextComponent.of("Sending you to the lobby.").color(TextColor.GREEN));
             }
         }
 

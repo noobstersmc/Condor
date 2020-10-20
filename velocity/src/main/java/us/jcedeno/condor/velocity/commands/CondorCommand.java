@@ -51,11 +51,11 @@ public class CondorCommand extends BaseCommand {
             }
         });
     }
+
     @Subcommand("create run")
-    public void onUHCRunCreate(CommandSource source, @Default("ewr") @Name("region") String region,
-            @Name("instance-type") @Default("vhf-2c-4gb") String instanceType) {
+    public void onUHCRunCreate(CommandSource source, @Name("seed") @Optional String seed) {
         var creatorName = getCommandSourceName(source);
-        VultrAPI.createRun(creatorName, region, instanceType).thenAccept((result) -> {
+        VultrAPI.createInstance(creatorName, seed, true).thenAccept((result) -> {
             if (result instanceof InstanceType) {
                 var machine = (InstanceType) result;
                 final var id = machine.getId();
@@ -87,10 +87,9 @@ public class CondorCommand extends BaseCommand {
     }
 
     @Subcommand("create uhc")
-    public void onInstanceCreate(CommandSource source, @Default("ewr") @Name("region") String region,
-            @Name("instance-type") @Default("vhf-3c-8gb") String instanceType) {
+    public void onInstanceCreate(CommandSource source, @Name("seed") @Optional String seed) {
         var creatorName = getCommandSourceName(source);
-        VultrAPI.createInstance(creatorName, region, instanceType).thenAccept((result) -> {
+        VultrAPI.createInstance(creatorName, seed, false).thenAccept((result) -> {
             if (result instanceof InstanceType) {
                 var machine = (InstanceType) result;
                 final var id = machine.getId();
@@ -121,7 +120,7 @@ public class CondorCommand extends BaseCommand {
         });
     }
 
-    @Subcommand("delete uhc")
+    @Subcommand("delete game")
     public void deleteVultrInstance(CommandSource source, @Name("instance-id") String id) {
         VultrAPI.deleteInstance(id).thenAccept(result -> {
             switch (result.getStatus()) {
