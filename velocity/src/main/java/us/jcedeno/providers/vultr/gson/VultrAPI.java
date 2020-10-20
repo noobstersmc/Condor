@@ -42,6 +42,7 @@ public class VultrAPI {
     public static CompletableFuture<InstanceResult> createInstance(String creator, String seed, boolean run) {
         return CompletableFuture.supplyAsync(() -> {
             var game = new InstanceCreatorJson();
+            game.setLabel(creator);
             if (run) {
                 game.setRun();
             }

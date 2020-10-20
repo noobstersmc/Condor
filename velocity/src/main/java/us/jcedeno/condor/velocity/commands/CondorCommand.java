@@ -68,7 +68,7 @@ public class CondorCommand extends BaseCommand {
             var p = player.get();
             var request = TextComponent.of(p.getUsername() + " wants to " + entries.getValue())
                     .hoverEvent(HoverEvent.showText(TextComponent.of("Click to approve"))).clickEvent(ClickEvent
-                            .of(net.kyori.text.event.ClickEvent.Action.RUN_COMMAND, "cv approve " + p.getUsername()));
+                            .of(net.kyori.text.event.ClickEvent.Action.RUN_COMMAND, "/cv approve " + p.getUsername()));
             source.sendMessage(request);
         });
 
@@ -77,7 +77,7 @@ public class CondorCommand extends BaseCommand {
     // /lp group staff permission set condor.create.run
     @CommandPermission("condor.proxy")
     @Subcommand("approve")
-    public void approve(CommandSource source, @Name("uuid") String id) {
+    public void approve(CommandSource source, @Name("name") String id) {
         var request = requests.get(id);
         if (request != null && !request.isBlank()) {
             source.sendMessage(TextComponent.of("Request approved"));
@@ -88,9 +88,9 @@ public class CondorCommand extends BaseCommand {
             if (requesType.equalsIgnoreCase("create")) {
                 var seed = (split.length > 2 ? split[2] : "");
                 if (gameType.equalsIgnoreCase("run")) {
-                    onUHCRunCreate(source, seed);
+                    onUHCRunCreate(source, seed, id + "'s UHC Run");
                 } else if (gameType.equalsIgnoreCase("uhc")) {
-                    onInstanceCreate(source, seed);
+                    onInstanceCreate(source, seed, id + "'s UHC");
                 }
 
             }
@@ -102,11 +102,14 @@ public class CondorCommand extends BaseCommand {
 
     @CommandPermission("condor.create.run")
     @Subcommand("create run")
-    public void onUHCRunCreate(CommandSource source, @Name("seed") @Optional String seed) {
-        var creatorName = getCommandSourceName(source);
+    public void onUHCRunCreate(CommandSource source, @Name("seed") @Optional String seed,
+            @Optional String customLabel) {
+        var creatorName = (customLabel != null ? customLabel : getCommandSourceName(source));
         if (!source.hasPermission("condor.proxy") && source instanceof Player) {
             var player = (Player) source;
             requests.put(player.getUsername(), "create:run" + (seed != null ? ":" + seed : ""));
+            player.sendMessage(TextComponent.of("Request has been made. Waiting for approval"));
+            instance.getServer().getAllPlayers().stream().filter(all -> all.hasPermission("condor.recieve.requests")).forEach(all-> all.sendMessage(TextComponent.of(player.getUsername() + " has requested an UHC Run")));
             return;
         }
         VultrAPI.createInstance(creatorName, seed, true).thenAccept((result) -> {
@@ -129,11 +132,15 @@ public class CondorCommand extends BaseCommand {
 
     @CommandPermission("condor.create.uhc")
     @Subcommand("create uhc")
-    public void onInstanceCreate(CommandSource source, @Name("seed") @Optional String seed) {
-        var creatorName = getCommandSourceName(source);
+    public void onInstanceCreate(CommandSource source, @Name("seed") @Optional String seed,
+    @Optional String customLabel) {
+        var creatorName = (customLabel != null ? customLabel : getCommandSourceName(source));
         if (!source.hasPermission("condor.proxy") && source instanceof Player) {
             var player = (Player) source;
             requests.put(player.getUsername(), "create:uhc" + (seed != null ? ":" + seed : ""));
+            player.sendMessage(TextComponent.of("Request has been made. Waiting for approval"));
+            instance.getServer().getAllPlayers().stream().filter(all -> all.hasPermission("condor.recieve.requests")).forEach(all-> all.sendMessage(TextComponent.of(player.getUsername() + " has requested a UHC")));
+            
             return;
         }
         VultrAPI.createInstance(creatorName, seed, false).thenAccept((result) -> {
@@ -154,6 +161,22 @@ public class CondorCommand extends BaseCommand {
         });
     }
 
+    @CommandPermission("condor.delete.game")
+    @Subcommand("delete this")
+    public void deleteCurrent(Player source) {
+        if(source.getCurrentServer().isPresent()){
+            var server = source.getCurrentServer().get();
+            server.getServer().getPlayersConnected().forEach(all->{
+                all.disconnect(TextComponent.of("Instance has been deleted. Thanks for playing."));
+            });
+            deleteVultrInstance(source, server.getServerInfo().getName());
+
+
+        }else{
+            source.sendMessage(TextComponent.of("No instance present"));
+        }
+
+    }
     @CommandPermission("condor.delete.game")
     @Subcommand("delete game")
     public void deleteVultrInstance(CommandSource source, @Name("instance-id") String id) {
