@@ -302,22 +302,6 @@ public class CondorCommand extends BaseCommand {
 
     }
 
-    @CommandPermission("condor.proxy")
-    @CommandAlias("pub")
-    public void publish(CommandSource source, String channel, String message) {
-        instance.getRedisManager().getConnection().publish(channel, message).thenAccept(a -> {
-            System.out.println("PUBLISHED");
-        });
-    }
-
-    @CommandPermission("condor.proxy")
-    @CommandAlias("sub")
-    public void sub(CommandSource source, String channel) {
-        instance.getRedisManager().getSub().subscribe(channel).thenAccept(a -> {
-            source.sendMessage(TextComponent.of(a.toString() + ", " + channel));
-        });
-    }
-
     public static ServerInfo of(String name, String ip, int port) {
         return new ServerInfo(name, new InetSocketAddress(ip, port));
     }
