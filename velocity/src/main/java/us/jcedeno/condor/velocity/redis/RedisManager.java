@@ -84,7 +84,9 @@ public class RedisManager {
                         .sendMessage(TextComponent.of("Attempting to connect " + server.getServerInfo().getName()));
                 actual_player.createConnectionRequest(server).fireAndForget();
             } else {
-                var server = instance.getServer().registerServer(CondorCommand.of(req.game_id, req.ip, 25565));
+                var ip = req.ip.split(":");
+                var server = instance.getServer()
+                        .registerServer(CondorCommand.of(req.game_id, ip[0], Integer.parseInt(ip[1])));
                 var actual_player = player_query.get();
                 actual_player
                         .sendMessage(TextComponent.of("Attempting to connect " + server.getServerInfo().getName()));
