@@ -1,13 +1,10 @@
 package us.jcedeno.condor.velocity.commands;
 
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.concurrent.TimeUnit;
 
+import com.google.gson.Gson;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
-import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 
 import co.aikar.commands.BaseCommand;
@@ -15,194 +12,70 @@ import co.aikar.commands.annotation.CommandAlias;
 import co.aikar.commands.annotation.CommandPermission;
 import co.aikar.commands.annotation.Default;
 import co.aikar.commands.annotation.Name;
-import co.aikar.commands.annotation.Optional;
 import co.aikar.commands.annotation.Subcommand;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import net.kyori.text.Component;
 import net.kyori.text.TextComponent;
-import net.kyori.text.event.ClickEvent;
-import net.kyori.text.event.HoverEvent;
-import net.kyori.text.event.HoverEvent.Action;
 import us.jcedeno.condor.velocity.CondorVelocity;
-import us.jcedeno.providers.vultr.gson.InstanceCreationError;
-import us.jcedeno.providers.vultr.gson.InstanceType;
-import us.jcedeno.providers.vultr.gson.VultrAPI;
+import us.jcedeno.condor.velocity.redis.DeleteRequest;
 
-@RequiredArgsConstructor
-@CommandAlias("condor-velocity|cv")
+@CommandAlias("lv|lair|lair-velocity")
 public class CondorCommand extends BaseCommand {
-    private @NonNull CondorVelocity instance;
-    private ArrayList<RegisteredServer> servers = new ArrayList<>();
-    private HashMap<String, String> requests = new HashMap<>();
+    private CondorVelocity instance;
 
-    @CommandPermission("condor.proxy")
+    public CondorCommand(CondorVelocity instance) {
+        this.instance = instance;
+    }
+
     @Default
-    public void onDefault(CommandSource source) {
-        VultrAPI.getInstances().thenAccept(a -> {
-            if (a != null) {
-                Component text = TextComponent.of("Servers: ");
-                for (var instance : a) {
-                    text = text.append(TextComponent.of("vultr-" + instance.getMain_ip())).hoverEvent(HoverEvent.of(
-                            Action.SHOW_TEXT,
-                            TextComponent.of("ID: " + instance.getId() + "\nvCPU: " + instance.getVcpu_count()
-                                    + "\nRAM: " + instance.getRam() + "M\nRegion: " + instance.getRegion()
-                                    + "\nStatus: " + instance.getStatus() + "\nDate: " + instance.getDate_created()
-                                    + "\nLabel: " + instance.getLabel() + "\nTag: " + instance.getTag())));
-                }
-                source.sendMessage(text);
-            }
-        });
-    }
+    public void onHelp(CommandSource source) {
+        if (source.hasPermission("condor.host")) {
 
-    @CommandPermission("condor.proxy")
-    @Subcommand("requests")
-    public void listRequest(CommandSource source) {
-        source.sendMessage(TextComponent.of("Pending requests (" + requests.size() + "):"));
-        requests.entrySet().forEach(entries -> {
-            var player = instance.getServer().getPlayer(entries.getKey());
-            if (!player.isPresent()) {
-                requests.remove(entries.getKey());
-                return;
-            }
-            var p = player.get();
-            var request = TextComponent.of(p.getUsername() + " wants to " + entries.getValue())
-                    .hoverEvent(HoverEvent.showText(TextComponent.of("Click to approve"))).clickEvent(ClickEvent
-                            .of(net.kyori.text.event.ClickEvent.Action.RUN_COMMAND, "/cv approve " + p.getUsername()));
-            source.sendMessage(request);
-        });
+        } else if (source.hasPermission("condor.admin")) {
 
-    }
-
-    // /lp group staff permission set condor.create.run
-    @CommandPermission("condor.proxy")
-    @Subcommand("approve")
-    public void approve(CommandSource source, @Name("name") String id) {
-        var request = requests.get(id);
-        if (request != null && !request.isBlank()) {
-            source.sendMessage(TextComponent.of("Request approved"));
-            requests.remove(id);
-            var split = request.split(":");
-            var requesType = split[0];
-            var gameType = split[1];
-            if (requesType.equalsIgnoreCase("create")) {
-                var seed = (split.length > 2 ? split[2] : "");
-                if (gameType.equalsIgnoreCase("run")) {
-                    onUHCRunCreate(source, seed, id + "'s UHC Run");
-                } else if (gameType.equalsIgnoreCase("uhc")) {
-                    onInstanceCreate(source, seed, id + "'s UHC");
-                }
-
-            }
         } else {
-            source.sendMessage(TextComponent.of("Can't approve that request..."));
+            source.sendMessage(TextComponent.of("content"));
+
         }
-
-    }
-
-    @CommandPermission("condor.create.run")
-    @Subcommand("create run")
-    public void onUHCRunCreate(CommandSource source, @Name("seed") @Optional String seed,
-            @Optional String customLabel) {
-        var creatorName = (customLabel != null ? customLabel : getCommandSourceName(source));
-        if (!source.hasPermission("condor.proxy") && source instanceof Player) {
-            var player = (Player) source;
-            requests.put(player.getUsername(), "create:run" + (seed != null ? ":" + seed : ""));
-            player.sendMessage(TextComponent.of("Request has been made. Waiting for approval"));
-            instance.getServer().getAllPlayers().stream().filter(all -> all.hasPermission("condor.recieve.requests")).forEach(all-> all.sendMessage(TextComponent.of(player.getUsername() + " has requested an UHC Run")));
-            return;
-        }
-        VultrAPI.createInstance(creatorName, seed, true).thenAccept((result) -> {
-            if (result instanceof InstanceType) {
-                var machine = (InstanceType) result;
-                final var id = machine.getId();
-                source.sendMessage(TextComponent.of("Instance for UHC Run is being created with id " + id));
-                waitForIP(source, id);
-
-            } else if (result instanceof InstanceCreationError) {
-                var error = (InstanceCreationError) result;
-                source.sendMessage(TextComponent.of("Instance couldn't be created with error " + error.getError()
-                        + " and code " + error.getStatus()));
-            } else {
-                source.sendMessage(TextComponent.of("A null pointer exception has ocurred. Please report this."));
-            }
-
-        });
-    }
-
-    @CommandPermission("condor.create.uhc")
-    @Subcommand("create uhc")
-    public void onInstanceCreate(CommandSource source, @Name("seed") @Optional String seed,
-    @Optional String customLabel) {
-        var creatorName = (customLabel != null ? customLabel : getCommandSourceName(source));
-        if (!source.hasPermission("condor.proxy") && source instanceof Player) {
-            var player = (Player) source;
-            requests.put(player.getUsername(), "create:uhc" + (seed != null ? ":" + seed : ""));
-            player.sendMessage(TextComponent.of("Request has been made. Waiting for approval"));
-            instance.getServer().getAllPlayers().stream().filter(all -> all.hasPermission("condor.recieve.requests")).forEach(all-> all.sendMessage(TextComponent.of(player.getUsername() + " has requested a UHC")));
-            
-            return;
-        }
-        VultrAPI.createInstance(creatorName, seed, false).thenAccept((result) -> {
-            if (result instanceof InstanceType) {
-                var machine = (InstanceType) result;
-                final var id = machine.getId();
-                source.sendMessage(TextComponent.of("Instance is being created with id " + id));
-                waitForIP(source, id);
-
-            } else if (result instanceof InstanceCreationError) {
-                var error = (InstanceCreationError) result;
-                source.sendMessage(TextComponent.of("Instance couldn't be created with error " + error.getError()
-                        + " and code " + error.getStatus()));
-            } else {
-                source.sendMessage(TextComponent.of("A null pointer exception has ocurred. Please report this."));
-            }
-
-        });
     }
 
     @CommandPermission("condor.delete.game")
     @Subcommand("delete this")
     public void deleteCurrent(Player source) {
-        if(source.getCurrentServer().isPresent()){
+        if (source.getCurrentServer().isPresent()) {
             var server = source.getCurrentServer().get();
-            server.getServer().getPlayersConnected().forEach(all->{
-                all.disconnect(TextComponent.of("Instance has been deleted. Thanks for playing."));
-            });
-            deleteVultrInstance(source, server.getServerInfo().getName());
+            var server_name = server.getServerInfo().getName();
+            if (server_name.startsWith("game-")) {
+                server.getServer().getPlayersConnected().forEach(all -> {
+                    all.createConnectionRequest(server.getServer()).fireAndForget();
+                    all.sendMessage(
+                            TextComponent.of("Server " + server_name + " has been deleted. Thanks for playing."));
+                });
+                deleteInstance(source, server.getServerInfo().getName());
+                return;
+            }
 
-
-        }else{
-            source.sendMessage(TextComponent.of("No instance present"));
+        } else {
+            source.sendMessage(TextComponent.of("Couldn't complete request."));
         }
 
     }
+
+    private static Gson gson = new Gson();
+
     @CommandPermission("condor.delete.game")
     @Subcommand("delete game")
-    public void deleteVultrInstance(CommandSource source, @Name("instance-id") String id) {
-        VultrAPI.deleteInstance(id).thenAccept(result -> {
-            switch (result.getStatus()) {
-                case 200: {
-                    var sourceName = getCommandSourceName(source);
-                    var deletionMessage = TextComponent
-                            .of("Server with ID " + id + " has been deleted by " + sourceName);
-                    instance.getServer().getAllPlayers().stream()
-                            .filter(player -> player.hasPermission("condor.deletion.notify"))
-                            .forEach(player -> player.sendMessage(deletionMessage));
-                    instance.getLogger().info(deletionMessage.toString());
-                    try {
-                        // Attempt to delete it if it exist on the proxy
-                        onRemoveName(source, id, 25565);
-                    } catch (Exception e) {
-                    }
-                    break;
-                }
-                default: {
-                    source.sendMessage(TextComponent
-                            .of("Server with ID " + id + " couldn't be deleted due to error: " + result.getError()));
-                }
-            }
-        });
+    public void deleteInstance(CommandSource source, @Name("instance-id") String id) {
+        var optional_server = instance.getServer().matchServer(id).stream().findFirst();
+        if (optional_server.isPresent()) {
+            var server = optional_server.get();
+            var source_name = getCommandSourceName(source);
+            var delete_request = DeleteRequest.of(source_name, server.getServerInfo().getAddress().getHostName());
+            var delete_json = gson.toJson(delete_request);
+            instance.getRedisManager().getJedis().publish("destroy", delete_json);
+            source.sendMessage(TextComponent.of(delete_json));
+
+        } else {
+            source.sendMessage(TextComponent.of("Couldn't find an instance with id " + id));
+        }
 
     }
 
@@ -210,121 +83,8 @@ public class CondorCommand extends BaseCommand {
         return source instanceof Player ? ((Player) source).getUsername() : "console";
     }
 
-    @CommandPermission("condor.proxy")
-    @Subcommand("add")
-    public void onAddServer(CommandSource source, @Name("server-name") String name, @Name("ip-address") String ip,
-            @Name("port") Integer port) {
-        var serverInfo = of(name, ip, port);
-        if (instance.getServer().getServer(name).isEmpty()) {
-            servers.add(instance.getServer().registerServer(serverInfo));
-            source.sendMessage(TextComponent.of("Registering server " + serverInfo.toString()));
-
-        } else {
-            source.sendMessage(TextComponent.of("Server already registered " + serverInfo.toString()));
-        }
-    }
-
-    @CommandPermission("condor.proxy")
-    @Subcommand("remove ip")
-    public void onRemoveIp(CommandSource source, @Name("ip") String ip) {
-        if (ip != null) {
-            var matchedInstance = instance.getServer().getAllServers().stream().filter(
-                    server -> server.getServerInfo().getAddress().getAddress().getHostAddress().equalsIgnoreCase(ip))
-                    .findFirst();
-            if (matchedInstance.isPresent()) {
-                var registeredServer = matchedInstance.get();
-                var serverInfo = registeredServer.getServerInfo();
-                servers.remove(registeredServer);
-
-                instance.getServer().unregisterServer(serverInfo);
-                source.sendMessage(TextComponent.of("Removed ephimeral instance " + serverInfo.toString()));
-            } else {
-                source.sendMessage(TextComponent.of("No ephimeral instance found with ip " + ip));
-            }
-
-        }
-    }
-
-    @CommandPermission("condor.proxy")
-    @Subcommand("remove name")
-    public void onRemoveName(CommandSource source, @Name("server-name") String name,
-            @Optional @Name("port") Integer port) {
-        if (name != null) {
-            var matchedInstance = instance.getServer().getServer(name);
-            if (matchedInstance.isPresent()) {
-                var registeredServer = matchedInstance.get();
-                var serverInfo = registeredServer.getServerInfo();
-                servers.remove(registeredServer);
-                instance.getServer().unregisterServer(serverInfo);
-                source.sendMessage(TextComponent.of("Removed ephimeral instance " + serverInfo.toString()));
-            } else {
-                source.sendMessage(TextComponent.of("No ephimeral instance named " + name));
-            }
-
-        }
-    }
-
-    @CommandPermission("condor.proxy")
-    @Subcommand("list")
-    public void listServers(CommandSource source) {
-        if (servers.isEmpty()) {
-            source.sendMessage(TextComponent.of("No ephimeral instances have been added"));
-        } else {
-            servers.forEach(all -> source.sendMessage(TextComponent.of(all.getServerInfo().toString())));
-        }
-
-    }
-
-    @CommandPermission("condor.proxy")
-    @Subcommand("restart")
-    public void removeAllEphimeralInstances(CommandSource source) {
-        if (servers.isEmpty()) {
-            source.sendMessage(TextComponent.of("No ephimeral instances have been added"));
-        } else {
-            servers.forEach(all -> instance.getServer().unregisterServer(all.getServerInfo()));
-            source.sendMessage(TextComponent.of("All ephimeral instances have been removed from the proxy."));
-        }
-
-    }
-
-    @CommandPermission("condor.proxy")
-    @Subcommand("change")
-    public void changeTemporary(CommandSource source, String serverName, String ip, @Optional Integer port) {
-        var server = instance.getServer().getServer(serverName);
-        if (server.isPresent()) {
-            var sv = server.get();
-            instance.getServer().unregisterServer(sv.getServerInfo());
-            instance.getServer().registerServer(of(serverName, ip, port != null ? port : 25565));
-            instance.getServer().getConfiguration().getAttemptConnectionOrder();
-        } else {
-            source.sendMessage(TextComponent.of(serverName + " doesn't exist."));
-        }
-
-    }
-
     public static ServerInfo of(String name, String ip, int port) {
         return new ServerInfo(name, new InetSocketAddress(ip, port));
-    }
-
-    private void waitForIP(CommandSource source, String id) {
-        instance.getServer().getScheduler().buildTask(instance, () -> {
-            VultrAPI.getInstance(id).thenAccept((updatedResult) -> {
-                if (updatedResult instanceof InstanceType) {
-                    var updatedMachine = (InstanceType) updatedResult;
-                    if (updatedMachine.getMain_ip().equalsIgnoreCase("0.0.0.0")) {
-                        waitForIP(source, id);
-                        return;
-                    }
-                    servers.add(instance.getServer()
-                            .registerServer(of(updatedMachine.getId(), updatedMachine.getMain_ip(), 25565)));
-                    source.sendMessage(TextComponent.of("Added server " + updatedMachine.getId() + " with ip "
-                            + updatedMachine.getMain_ip() + " to the proxy"));
-                } else {
-                    source.sendMessage(TextComponent.of("An error ocurred..."));
-                }
-            });
-
-        }).delay(10, TimeUnit.SECONDS).schedule();
     }
 
 }

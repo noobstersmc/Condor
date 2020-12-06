@@ -33,6 +33,8 @@ shadowJar {
 
 dependencies {
     compile project(':common')
+    //Jedis
+    compile 'redis.clients:jedis:3.3.0'
     //Letuce
     compile 'io.lettuce:lettuce-core:6.0.0.RELEASE'
     //Commands

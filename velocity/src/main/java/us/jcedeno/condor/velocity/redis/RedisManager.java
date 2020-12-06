@@ -8,6 +8,7 @@ import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
 import lombok.Getter;
 import net.kyori.text.TextComponent;
+import redis.clients.jedis.Jedis;
 import us.jcedeno.condor.velocity.CondorVelocity;
 import us.jcedeno.condor.velocity.commands.CondorCommand;
 
@@ -15,10 +16,15 @@ public class RedisManager {
     private CondorVelocity instance;
     private @Getter RedisClient redisClient;
     private @Getter StatefulRedisPubSubConnection<String, String> connection;
+    private @Getter Jedis jedis;
+
     private static Gson gson = new Gson();
 
     public RedisManager(CondorVelocity instance) {
         this.instance = instance;
+        this.jedis = new Jedis("redis-11764.c73.us-east-1-2.ec2.cloud.redislabs.com", 11764);
+        this.jedis.auth("Gxb1D0sbt3VoyvICOQKC8IwakpVdWegW");
+        
         this.redisClient = RedisClient.create(
                 "redis://Gxb1D0sbt3VoyvICOQKC8IwakpVdWegW@redis-11764.c73.us-east-1-2.ec2.cloud.redislabs.com:11764/0");
         this.connection = redisClient.connectPubSub();
@@ -31,31 +37,31 @@ public class RedisManager {
             }
 
             @Override
-            public void message(String arg0, String arg1, String arg2) {
+            public void message(String pattern, String channel, String message) {
                 // TODO Auto-generated method stub
 
             }
 
             @Override
-            public void psubscribed(String arg0, long arg1) {
+            public void subscribed(String channel, long count) {
                 // TODO Auto-generated method stub
 
             }
 
             @Override
-            public void punsubscribed(String arg0, long arg1) {
+            public void psubscribed(String pattern, long count) {
                 // TODO Auto-generated method stub
 
             }
 
             @Override
-            public void subscribed(String arg0, long arg1) {
+            public void unsubscribed(String channel, long count) {
                 // TODO Auto-generated method stub
 
             }
 
             @Override
-            public void unsubscribed(String arg0, long arg1) {
+            public void punsubscribed(String pattern, long count) {
                 // TODO Auto-generated method stub
 
             }

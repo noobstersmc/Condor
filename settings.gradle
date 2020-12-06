@@ -11,5 +11,5 @@ rootProject.name = 'Condor'
 
 include 'velocity'
 /*uncomment to include archaic azure manager ´paper' */
-//include 'paper'
+include 'paper'
 include 'common'
