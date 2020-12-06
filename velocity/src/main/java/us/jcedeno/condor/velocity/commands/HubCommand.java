@@ -28,6 +28,7 @@ public class HubCommand extends BaseCommand {
             if (lobby.isPresent()) {
                 var lobbyServer = lobby.get();
                 if (player.getCurrentServer().get().getServerInfo().getName().equalsIgnoreCase("lobby")) {
+                    player.spoofChatInput("/a");
                     return;
                 }
                 player.createConnectionRequest(lobbyServer).fireAndForget();

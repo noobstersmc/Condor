@@ -1,10 +1,8 @@
 package us.jcedeno.condor.velocity.redis;
 
 import com.google.gson.Gson;
-import com.velocitypowered.api.proxy.server.ServerInfo;
 
 import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisFuture;
 import io.lettuce.core.pubsub.RedisPubSubListener;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
@@ -64,7 +62,7 @@ public class RedisManager {
 
         });
         RedisPubSubAsyncCommands<String, String> async = connection.async();
-        RedisFuture<Void> future = async.subscribe("condor-transfer");
+        async.subscribe("condor-transfer");
 
     }
 
@@ -84,9 +82,8 @@ public class RedisManager {
                         .sendMessage(TextComponent.of("Attempting to connect " + server.getServerInfo().getName()));
                 actual_player.createConnectionRequest(server).fireAndForget();
             } else {
-                var ip = req.ip.split(":");
                 var server = instance.getServer()
-                        .registerServer(CondorCommand.of(req.game_id, ip[0], Integer.parseInt(ip[1])));
+                        .registerServer(CondorCommand.of(req.game_id, req.getIp(), req.getPort()));
                 var actual_player = player_query.get();
                 actual_player
                         .sendMessage(TextComponent.of("Attempting to connect " + server.getServerInfo().getName()));
