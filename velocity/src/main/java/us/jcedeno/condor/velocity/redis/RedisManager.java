@@ -23,8 +23,9 @@ public class RedisManager {
     public RedisManager(CondorVelocity instance) {
         this.instance = instance;
         this.jedis = new Jedis("redis-11764.c73.us-east-1-2.ec2.cloud.redislabs.com", 11764);
+        this.jedis.connect();
         this.jedis.auth("Gxb1D0sbt3VoyvICOQKC8IwakpVdWegW");
-        
+
         this.redisClient = RedisClient.create(
                 "redis://Gxb1D0sbt3VoyvICOQKC8IwakpVdWegW@redis-11764.c73.us-east-1-2.ec2.cloud.redislabs.com:11764/0");
         this.connection = redisClient.connectPubSub();
