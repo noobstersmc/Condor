@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import com.google.gson.Gson;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 
@@ -49,29 +50,53 @@ public class CondorCommand extends BaseCommand {
         }
     }
 
-    @CommandPermission("condor.delete.game")
     @Subcommand("delete this")
     public void deleteCurrent(Player source) {
-        if (source.getCurrentServer().isPresent()) {
-            var server = source.getCurrentServer().get();
-            var server_name = server.getServerInfo().getName();
-            if (server_name.startsWith("game-")) {
-                var lobby = instance.getServer().getServer("lobby");
-                if(lobby.isPresent()){
-                    server.getServer().getPlayersConnected().forEach(all -> {
-                        all.createConnectionRequest(lobby.get()).fireAndForget();
-                        all.sendMessage(
-                                TextComponent.of("Server " + server_name + " has been deleted. Thanks for playing."));
-                    });
+        if (source.hasPermission("condor.delete.game") || source.hasPermission("group.host")) {
+            if (source.getCurrentServer().isPresent()) {
+                var server = source.getCurrentServer().get();
+                var server_name = server.getServerInfo().getName();
+                if (server_name.startsWith("game-")) {
+                    if (source.hasPermission("condor.delete.game") || shouldDeleteByHost(source, server)) {
+                        var lobby = instance.getServer().getServer("lobby");
+                        if (lobby.isPresent()) {
+                            server.getServer().getPlayersConnected().forEach(all -> {
+                                all.createConnectionRequest(lobby.get()).fireAndForget();
+                                all.sendMessage(TextComponent.of("Server " + server_name + " has been deleted by "
+                                        + source.getUsername() + ". Thanks for playing."));
+                            });
+                        }
+                        deleteInstance(source, server.getServerInfo().getName());
+                    }
+                    return;
                 }
-                deleteInstance(source, server.getServerInfo().getName());
-                return;
-            }
 
-        } else {
-            source.sendMessage(TextComponent.of("Couldn't complete request."));
+            } else {
+                source.sendMessage(TextComponent.of("Couldn't complete request."));
+            }
+        }
+    }
+
+    private boolean shouldDeleteByHost(Player source, ServerConnection server) {
+        var lettuce = instance.getRedisManager().getCommands();
+        try {
+            var server_data = lettuce.keys("servers:*").get();
+            if (server_data != null && !server_data.isEmpty()) {
+                var m_server_data = lettuce.mget(server_data.toArray(new String[] {})).get();
+                var optional_match = m_server_data.stream()
+                        .filter(all -> all.getValue().toLowerCase().contains(getCommandSourceName(source)) && all
+                                .getValue().toLowerCase().contains(server.getServerInfo().getAddress().getHostName()))
+                        .findFirst();
+                if (optional_match.isPresent()) {
+                    System.out.println(optional_match.get().getValue());
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
+        return false;
     }
 
     @CommandPermission("condor.delete.game")

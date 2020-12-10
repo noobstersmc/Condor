@@ -3,6 +3,8 @@ package us.jcedeno.condor.velocity.redis;
 import com.google.gson.Gson;
 
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.pubsub.RedisPubSubListener;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
@@ -15,6 +17,8 @@ import us.jcedeno.condor.velocity.commands.CondorCommand;
 public class RedisManager {
     private CondorVelocity instance;
     private @Getter RedisClient redisClient;
+    private @Getter StatefulRedisConnection<String, String> statefulRedisConnection;
+    private @Getter RedisAsyncCommands<String, String> commands;
     private @Getter StatefulRedisPubSubConnection<String, String> connection;
     private @Getter Jedis jedis;
 
@@ -29,6 +33,8 @@ public class RedisManager {
         this.redisClient = RedisClient.create(
                 "redis://Gxb1D0sbt3VoyvICOQKC8IwakpVdWegW@redis-11764.c73.us-east-1-2.ec2.cloud.redislabs.com:11764/0");
         this.connection = redisClient.connectPubSub();
+        this.statefulRedisConnection = redisClient.connect();
+        this.commands = statefulRedisConnection.async();
         this.connection.addListener(new RedisPubSubListener<String, String>() {
 
             @Override
