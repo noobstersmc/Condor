@@ -88,7 +88,6 @@ public class CondorCommand extends BaseCommand {
                                 .getValue().toLowerCase().contains(server.getServerInfo().getAddress().getHostName()))
                         .findFirst();
                 if (optional_match.isPresent()) {
-                    System.out.println(optional_match.get().getValue());
                     return true;
                 }
             }
@@ -109,7 +108,6 @@ public class CondorCommand extends BaseCommand {
             var delete_request = DeleteRequest.of(source_name, server.getServerInfo().getAddress().getHostName());
             var delete_json = gson.toJson(delete_request);
             instance.getRedisManager().getJedis().publish("destroy", delete_json);
-            source.sendMessage(TextComponent.of(delete_json));
 
         } else {
             source.sendMessage(TextComponent.of("Couldn't find an instance with id " + id));
