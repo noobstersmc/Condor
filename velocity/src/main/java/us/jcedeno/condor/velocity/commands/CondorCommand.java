@@ -52,7 +52,7 @@ public class CondorCommand extends BaseCommand {
 
     @Subcommand("delete this")
     public void deleteCurrent(Player source) {
-        if (source.hasPermission("condor.delete.game") || source.hasPermission("group.host")) {
+        if (source.hasPermission("condor.delete.game") || source.hasPermission("condor.delete.game.own")) {
             if (source.getCurrentServer().isPresent()) {
                 var server = source.getCurrentServer().get();
                 var server_name = server.getServerInfo().getName();
