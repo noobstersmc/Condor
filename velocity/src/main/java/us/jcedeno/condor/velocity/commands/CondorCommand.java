@@ -52,12 +52,19 @@ public class CondorCommand extends BaseCommand {
 
     @Subcommand("delete this")
     public void deleteCurrent(Player source) {
+        System.out.println("entry");
         if (source.hasPermission("condor.delete.game") || source.hasPermission("condor.delete.game.own")) {
+            System.out.println("1");
             if (source.getCurrentServer().isPresent()) {
+                System.out.println("2");
                 var server = source.getCurrentServer().get();
                 var server_name = server.getServerInfo().getName();
                 if (server_name.startsWith("game-")) {
+
+                    System.out.println("3");
                     if (source.hasPermission("condor.delete.game") || shouldDeleteByHost(source, server)) {
+
+                        System.out.println("4");
                         var lobby = instance.getServer().getServer("lobby");
                         if (lobby.isPresent()) {
                             server.getServer().getPlayersConnected().forEach(all -> {
@@ -84,7 +91,7 @@ public class CondorCommand extends BaseCommand {
             if (server_data != null && !server_data.isEmpty()) {
                 var m_server_data = lettuce.mget(server_data.toArray(new String[] {})).get();
                 var optional_match = m_server_data.stream()
-                        .filter(all -> all.getValue().toLowerCase().contains(getCommandSourceName(source)) && all
+                        .filter(all -> all.getValue().toLowerCase().contains(getCommandSourceName(source).toLowerCase()) && all
                                 .getValue().toLowerCase().contains(server.getServerInfo().getAddress().getHostName()))
                         .findFirst();
                 if (optional_match.isPresent()) {
