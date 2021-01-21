@@ -1,6 +1,9 @@
 package us.jcedeno.condor.velocity.redis;
 
+import java.util.UUID;
+
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -10,6 +13,10 @@ import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
 import lombok.Getter;
 import net.kyori.text.TextComponent;
+import net.kyori.text.event.ClickEvent;
+import net.kyori.text.event.HoverEvent;
+import net.kyori.text.event.HoverEvent.Action;
+import net.kyori.text.format.TextColor;
 import redis.clients.jedis.Jedis;
 import us.jcedeno.condor.velocity.CondorVelocity;
 import us.jcedeno.condor.velocity.commands.CondorCommand;
@@ -39,7 +46,7 @@ public class RedisManager {
 
             @Override
             public void message(String channel, String message) {
-                process(channel, message);
+                Nprocess(channel, message);
 
             }
 
@@ -75,7 +82,71 @@ public class RedisManager {
 
         });
         RedisPubSubAsyncCommands<String, String> async = connection.async();
-        async.subscribe("condor-transfer");
+        async.subscribe("condor");
+
+    }
+
+    void Nprocess(String Channel, String message) {
+        if (Channel.equalsIgnoreCase("condor")) {
+            var condor_action = gson.fromJson(message, JsonObject.class);
+            var action_type = condor_action.get("type").getAsString();
+
+            switch (action_type.toLowerCase()) {
+                case "connect": {
+                    var uuid = condor_action.get("uuid");
+                    var condor_id = condor_action.get("condor_id");
+
+                    if (uuid != null && condor_id != null) {
+                        var player_query = instance.getServer().getPlayer(UUID.fromString(uuid.getAsString()));
+
+                        if (player_query.isPresent()) {
+                            var player = player_query.get();
+                            var condorID = condor_id.getAsString();
+                            var optional_server = instance.getServer().getServer(condorID);
+
+                            if (optional_server.isPresent()) {
+                                var server = optional_server.get();
+                                player.createConnectionRequest(server).fireAndForget();
+
+                            } else {
+                                var ip = condor_action.get("ip").getAsString().split(":");
+                                var server = instance.getServer()
+                                        .registerServer(CondorCommand.of(condorID, ip[0], Integer.parseInt(ip[1])));
+                                player.createConnectionRequest(server).fireAndForget();
+                            }
+
+                        }
+
+                    }
+                    break;
+                }
+                case "broadcast": {
+                    instance.getServer().broadcast(TextComponent.of(condor_action.get("message").getAsString()));
+                    break;
+                }
+                // TODO: Allow condor to send more complex messages.
+                case "notify": {
+                    // Notify when a server has gone online
+                    var component = TextComponent.of(condor_action.get("message").getAsString())
+                            .hoverEvent(HoverEvent.of(Action.SHOW_TEXT,
+                                    TextComponent.of("Click to join!", TextColor.GREEN)))
+                            .clickEvent(ClickEvent.of(net.kyori.text.event.ClickEvent.Action.RUN_COMMAND,
+                                    condor_action.get("command").getAsString()));
+                    var target = condor_action.get("target");
+                    if (target.isJsonArray()) {
+                        var players = target.getAsJsonArray();
+                        // Send message to specific users
+                        players.forEach(all -> instance.getServer().getPlayer(UUID.fromString(all.getAsString()))
+                                .ifPresent(present -> present.sendMessage(component)));
+                    } else if (target.getAsString().startsWith("@a"))
+                        // Send message to all users
+                        instance.getServer().broadcast(component);
+
+                    break;
+                }
+            }
+
+        }
 
     }
 
