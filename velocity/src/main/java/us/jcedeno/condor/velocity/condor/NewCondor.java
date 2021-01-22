@@ -26,7 +26,7 @@ public class NewCondor {
     public static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
     static OkHttpClient client = new OkHttpClient().newBuilder().readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS).build();
-    public static String CONDOR_URL = "http://condor.jcedeno.us/";
+    public static String CONDOR_URL = "https://hynix-condor.herokuapp.com/";
 
     /**
      * Create a post request in condor.
@@ -59,6 +59,18 @@ public class NewCondor {
         try (Response response = client.newCall(request).execute()) {
             return response.body().string();
         }
+    }
+
+    /**
+     * Obtain a Condor User's profile status including outstanding credits, active
+     * instances, instance limit, available credits, and array of instances.
+     * 
+     * @param auth User's auth token
+     * @return JSON containing amounts, limit, and instances as JsonArray.
+     * @throws IOException
+     */
+    public static String getProfile(String auth) throws IOException {
+        return get(auth, "billing/status");
     }
 
     /**
@@ -125,13 +137,13 @@ public class NewCondor {
      * Return a Json array of an user's active instances.
      * 
      * @param auth Authorization token, use app api key.
-     * @param id billing id or token to look for.
+     * @param id   billing id or token to look for.
      * @return JsonArray of active instances.
      * @throws IOException
      */
     public static String getBill(String auth, String id) throws IOException {
-        Request request = new Request.Builder().url(CONDOR_URL + "bills/" + id + "?onlyActive=true").addHeader("Authorization", auth)
-                .addHeader("Content-Type", "application/json").get().build();
+        Request request = new Request.Builder().url(CONDOR_URL + "bills/" + id + "?onlyActive=true")
+                .addHeader("Authorization", auth).addHeader("Content-Type", "application/json").get().build();
         try (Response response = client.newCall(request).execute()) {
             return response.body().string();
         }

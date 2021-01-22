@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 
 import co.aikar.commands.VelocityCommandManager;
 import lombok.Getter;
+import us.jcedeno.condor.velocity.commands.CondorCMD;
 import us.jcedeno.condor.velocity.commands.CondorCommand;
 import us.jcedeno.condor.velocity.commands.HubCommand;
 import us.jcedeno.condor.velocity.redis.RedisManager;
@@ -27,8 +28,7 @@ public class CondorVelocity {
         this.server = server;
         this.logger = logger;
         logger.info("Condor has landed!");
-        
-        
+
     }
 
     @Subscribe
@@ -36,6 +36,7 @@ public class CondorVelocity {
         this.commandManager = new VelocityCommandManager(server, this);
         this.commandManager.registerCommand(new CondorCommand(this));
         this.commandManager.registerCommand(new HubCommand(this));
+        this.commandManager.registerCommand(new CondorCMD(this));
         this.redisManager = new RedisManager(this);
         logger.info("Command has been injected.");
     }
