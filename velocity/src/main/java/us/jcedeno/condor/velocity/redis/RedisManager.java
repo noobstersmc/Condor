@@ -47,6 +47,7 @@ public class RedisManager {
             @Override
             public void message(String channel, String message) {
                 Nprocess(channel, message);
+                System.out.println(message);
 
             }
 
