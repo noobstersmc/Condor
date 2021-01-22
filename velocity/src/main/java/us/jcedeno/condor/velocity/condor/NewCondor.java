@@ -166,4 +166,23 @@ public class NewCondor {
         }
 
     }
+
+    public static String postTemplate(String json) throws IOException {
+        var body = RequestBody.create(json, JSON);
+        Request request = new Request.Builder().url(CONDOR_URL + "utils/request")
+                .addHeader("Content-Type", "application/json").post(body).build();
+        try (Response response = client.newCall(request).execute()) {
+            return response.body().string();
+        }
+    }
+
+    public static String getTemplate(String id) throws IOException {
+        Request request = new Request.Builder().url(CONDOR_URL + "utils/request?template_id=" + id)
+                .addHeader("Content-Type", "application/json").get().build();
+        try (Response response = client.newCall(request).execute()) {
+            return response.body().string();
+        }
+
+    }
+
 }
