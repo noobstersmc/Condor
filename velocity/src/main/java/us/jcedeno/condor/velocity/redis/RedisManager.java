@@ -144,6 +144,13 @@ public class RedisManager {
                     instance.getServer().broadcast(TextComponent.of(condor_action.get("message").getAsString()));
                     break;
                 }
+                case "refresh": {
+                    instance.getServer().getAllServers().stream()
+                            .filter(all -> all.getPlayersConnected().size() <= 0
+                                    && !all.getServerInfo().getName().startsWith("lobby"))
+                            .forEach(all -> instance.getServer().unregisterServer(all.getServerInfo()));
+                    break;
+                }
                 // TODO: Allow condor to send more complex messages.
                 case "notify": {
                     // Notify when a server has gone online
