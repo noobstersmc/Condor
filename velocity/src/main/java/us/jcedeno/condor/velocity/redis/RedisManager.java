@@ -121,6 +121,25 @@ public class RedisManager {
                     }
                     break;
                 }
+                case "move": {
+                    var target = condor_action.get("target").getAsString();
+                    var source = condor_action.get("source").getAsString();
+                    var players = condor_action.get("players").getAsString();
+                    if (source != null && target != null) {
+                        instance.getServer().getServer(source).ifPresent(sv -> {
+                            instance.getServer().getServer(target).ifPresent(targetServer -> {
+                                if (players.equals("@a")) {
+                                    sv.getPlayersConnected()
+                                            .forEach(all -> all.createConnectionRequest(targetServer).fireAndForget());
+
+                                }
+
+                            });
+                        });
+
+                    }
+                    break;
+                }
                 case "broadcast": {
                     instance.getServer().broadcast(TextComponent.of(condor_action.get("message").getAsString()));
                     break;
@@ -145,34 +164,6 @@ public class RedisManager {
 
                     break;
                 }
-            }
-
-        }
-
-    }
-
-    void process(String Channel, String message) {
-        if (Channel.equalsIgnoreCase("condor-transfer")) {
-            var req = gson.fromJson(message, MoveRequest.class);
-            var query = instance.getServer().getServer(req.game_id);
-            var player_query = instance.getServer().getPlayer(req.getPlayer_name());
-            if (player_query.isEmpty()) {
-                return;
-            }
-
-            if (query.isPresent()) {
-                var server = query.get();
-                var actual_player = player_query.get();
-                actual_player
-                        .sendMessage(TextComponent.of("Attempting to connect " + server.getServerInfo().getName()));
-                actual_player.createConnectionRequest(server).fireAndForget();
-            } else {
-                var server = instance.getServer()
-                        .registerServer(CondorCommand.of(req.game_id, req.getIp(), req.getPort()));
-                var actual_player = player_query.get();
-                actual_player
-                        .sendMessage(TextComponent.of("Attempting to connect " + server.getServerInfo().getName()));
-                actual_player.createConnectionRequest(server).fireAndForget();
             }
 
         }

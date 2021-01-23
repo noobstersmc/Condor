@@ -63,6 +63,22 @@ public class NewCondor {
     }
 
     /**
+     * Create a post request in condor.
+     * 
+     * @param auth Authorization token, also used as billing id.
+     * @param json JSON with the specific request
+     * @return Json Object in string form.
+     * @throws IOException
+     */
+    public static String getTokens() throws IOException {
+        var body = RequestBody.create("{}", JSON);
+        Request request = new Request.Builder().url(CONDOR_URL + "guis/token").post(body).build();
+        try (Response response = client.newCall(request).execute()) {
+            return response.body().string();
+        }
+    }
+
+    /**
      * Creates a get request to condor.
      * 
      * @param auth Authorization token
