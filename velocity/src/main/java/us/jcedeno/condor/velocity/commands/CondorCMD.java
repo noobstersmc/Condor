@@ -85,6 +85,10 @@ public class CondorCMD extends BaseCommand {
     public void createServer(Player sender, @Name("Token") String token, @Name("template") String template_id)
             throws IOException {
         var json = NewCondor.getTemplate(template_id);
+        if (json.equals("error")) {
+            sender.sendMessage(TextComponent.of("This server has already been created.", TextColor.RED));
+            return;
+        }
         var createServer = NewCondor.post(token, json);
         var json_reponse = gson.fromJson(createServer, JsonObject.class);
         var error = json_reponse.get("error");

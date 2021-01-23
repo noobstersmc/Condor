@@ -150,6 +150,17 @@ public class NewCondor {
         }
     }
 
+    public static String createToken(String json) throws IOException {
+        // Register user
+        var body = RequestBody.create(json, JSON);
+        Request request = new Request.Builder().url(CONDOR_URL + "utils/create-token")
+                .addHeader("Authorization", "6QR3W05K3F").addHeader("Content-Type", "application/json").post(body)
+                .build();
+        try (Response response = client.newCall(request).execute()) {
+            return response.body().string();
+        }
+    }
+
     /**
      * Create a delete request in condor
      * 
