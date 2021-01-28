@@ -1,5 +1,7 @@
 package us.jcedeno.condor.velocity;
 
+import java.util.concurrent.TimeUnit;
+
 import com.google.inject.Inject;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
@@ -39,6 +41,15 @@ public class CondorVelocity {
         this.commandManager.registerCommand(new CondorCMD(this));
         this.redisManager = new RedisManager(this);
         logger.info("Command has been injected.");
+        server.getScheduler().buildTask(this, new Runnable() {
+            @Override
+            public void run() {
+                var source = server.getConsoleCommandSource();
+                server.getCommandManager().execute(source, "condor admin refresh");
+                server.getCommandManager().execute(source, "condor admin pull");
+            }
+
+        }).repeat(1, TimeUnit.MINUTES).delay(3, TimeUnit.SECONDS).schedule();
     }
 
 }
