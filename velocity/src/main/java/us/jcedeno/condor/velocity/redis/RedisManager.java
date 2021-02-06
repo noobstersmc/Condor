@@ -140,6 +140,17 @@ public class RedisManager {
                     }
                     break;
                 }
+                case "moveOne": {
+
+                    var target = condor_action.get("target").getAsString();
+                    var uuid = UUID.fromString(condor_action.get("uuid").getAsString());
+                    var ins = instance.getServer();
+                    // Send player to server if it exists.
+                    ins.getPlayer(uuid).ifPresent(player -> ins.getServer(target)
+                            .ifPresent(server -> player.createConnectionRequest(server).fireAndForget()));
+
+                    break;
+                }
                 case "broadcast": {
                     instance.getServer().broadcast(TextComponent.of(condor_action.get("message").getAsString()));
                     break;
